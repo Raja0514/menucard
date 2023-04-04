@@ -1,0 +1,83 @@
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { IMG_CDN_URL1 } from "./Config";
+import { MENU_CARD_URL } from "./Config";
+import Shimmer from "./Shimmer";
+
+const RestaMenu = () => {
+  const { id } = useParams();
+  const [Info, setInfo] = useState([]);
+  const [Restaurant,setRestaurant] = useState([]);
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  async function getData() {
+    const data = await fetch(MENU_CARD_URL + id);
+    const json = await data.json();
+    console.log("json", json);
+    const menuItemsList =
+      json.data.cards[2]["groupedCard"].cardGroupMap.REGULAR.cards;
+
+    const itemCategory =
+      "type.googleapis.com/swiggy.presentation.food.v2.ItemCategory";
+
+    const NestedItemCategory =
+      "type.googleapis.com/swiggy.presentation.food.v2.NestedItemCategory";
+
+    const menu = menuItemsList.map((item) => {
+      if (
+        item.card.card["@type"] === itemCategory ||
+        item.card.card["@type"] === NestedItemCategory
+      )
+        return item.card.card;
+    });
+
+    console.log("menu", menu);
+
+    const modified = {
+      info: json.data.cards[0].card.card.info,
+      menu: menu.filter((value) => value !== undefined),
+    };
+    console.log("info", modified.info);
+    console.log("modified menu", modified.menu);
+
+    setRestaurant(modified.menu);
+    setInfo(modified.info);
+  }
+  return (
+    <>
+      {Info.length === 0 ? (
+        <Shimmer />
+      ) : (
+        <div className="card5">
+          <h3>Restauarnt Id:{id}</h3>
+          <h3>Restaurant Name:{Restaurant.name}</h3>
+
+          <div className="card7">
+            <img
+              className="w-[254px] h-[165px] mob:w-[130px] mob:[81px]"
+              src={IMG_CDN_URL1 + Info.cloudinaryImageId}
+              alt="datamissing"
+            />
+            <h3>Total Ratings:{Info.totalRatings / 100}</h3>
+            <h3>city:{Info.city}</h3>
+            <h3>Area Name:{Info.areaName}</h3>
+          </div>
+
+          {/* How can i manipulate the menu card  ?  Here i show only tittle */}
+          {Restaurant.map((data) => (
+            <ul key={data.title}>
+              <li>{data.title}</li>
+            </ul>
+          ))}
+          {/* 
+        How can i map here please adivice */}
+        </div>
+      )}
+    </>
+  );
+};
+
+export default RestaMenu;
